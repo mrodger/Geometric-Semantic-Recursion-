@@ -1,6 +1,6 @@
 # Geometric Semantic Analysis
 
-**Semantic scene understanding for language.** 60,760 embedded message pairs projected into 3D space, classified into corpus regions, and queried with KNN — the same primitives used in LiDAR point cloud segmentation, applied to conversational AI governance.
+**Semantic scene understanding for language.** 60,760 embedded message pairs projected into 3D space, classified into corpus regions, and queried with KNN - the same primitives used in LiDAR point cloud segmentation, applied to conversational AI governance.
 
 ![Semantic point cloud — 60,760 points, live conversation embedding, corpus clusters](assets/demo.gif)
 
@@ -8,9 +8,9 @@
 
 ## The Problem
 
-Agentic systems need to know *where they are* — not just what they're doing. A message about a medication dosage and a message about a sales pitch may look syntactically similar but sit in completely different regions of semantic space. Routing decisions, tool access, and compliance checks all depend on that distinction.
+Agentic systems need to know *where they are*, not just what they're doing. A message about a medication dosage and a message about a sales pitch may look syntactically similar but sit in completely different regions of semantic space. Routing decisions, tool access, and compliance checks all depend on that distinction.
 
-Classical CV solved this for physical space: embed sensor data, segment into regions, reason about proximity and membership. This project applies the same approach to language.
+Classical CV solved this for physical space: embed sensor data, segment into regions, reason about proximity and membership. This project applies the same approach to language to help guide autonomous agents.
 
 ---
 
@@ -46,7 +46,7 @@ Adversarial examples (social engineering, jailbreak attempts) form a distinct ge
 
 ![60,760 points across 6 corpus regions — global coordinate frame](assets/04_global_scope.png)
 
-Six corpus regions, geometrically separated by UMAP. Each cluster is a semantic class. The adversarial corpus (red, top-left) maintains a consistent spatial margin from the legitimate corpora — classification is a proximity query, not a pattern match.
+Six corpus regions, geometrically separated by UMAP. Each cluster is a semantic class. The adversarial corpus (red, top-left) maintains a consistent spatial margin from the legitimate corpora. Classificaton becomes an SQL query.
 
 ---
 
@@ -70,7 +70,9 @@ K-means (k=5) within a single corpus. TF-IDF labels each sub-cluster automatical
 
 ![Freeform conversation (4 messages) plotted — nearest corpus: Real Estate at 5.5](assets/17_freeform_plotted.png)
 
-Paste any conversation as JSON. Each turn is embedded and placed via KNN interpolation — position is the weighted mean of its k nearest reference points. The sequence of placements traces a *trajectory through semantic space*, surfacing context drift the way a particle filter surfaces pose uncertainty. Here a mortgage query lands near Real Estate (5.5) with Healthcare at 9.8 — the system knows it's in-domain before the agent does.
+Paste any conversation as JSON. Each turn is embedded and placed via KNN interpolation — position is the weighted mean of its k nearest reference points. The sequence of placements traces a *trajectory through semantic space*, surfacing context drift the way a particle filter surfaces pose uncertainty. Here a mortgage query in a healthcare chat lands near Real Estate (5.5) with Healthcare at 9.8. The system knows it's out of domain before the chat even reaches the agent log (note the PostGIS analysis of the upcomming message below the main chat pane). 
+
+In a chatbot setting this might indicate steering instructions to tamper with behavior, in a multi persona/multi agent setting that could be a signal to reroute away from your medical agent to one better suited automatically.
 
 ---
 
