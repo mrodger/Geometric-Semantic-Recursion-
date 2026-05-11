@@ -2,9 +2,7 @@
 
 **Semantic scene understanding for language.** 60,760 embedded message pairs projected into 3D space, classified into corpus regions, and queried with KNN — the same primitives used in LiDAR point cloud segmentation, applied to conversational AI governance.
 
-[![Global semantic point cloud — 60,760 points with labeled wireframe bounding volumes](https://drive.google.com/uc?export=view&id=19olxrPJazYtzal33Zd196t4Symu0-0oU)](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)
-
-*[Watch the full demo (webm)](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)*
+![Semantic point cloud — 60,760 points, live conversation embedding, corpus clusters](assets/demo.gif)
 
 ---
 
@@ -44,11 +42,11 @@ Adversarial examples (social engineering, jailbreak attempts) form a distinct ge
 
 ## Demos
 
-### Global view — labeled bounding volumes
+### Global view — semantic scene layout
 
-[![Conversation plotted against global corpus cloud](https://drive.google.com/uc?export=view&id=1v1zZGAR6vebjItW6hJNCTkLdKyRWFL4G)](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)
+![60,760 points across 6 corpus regions — global coordinate frame](assets/04_global_scope.png)
 
-A live conversation (16 messages) plotted in real time against the corpus. Nearest Corpora panel shows KNN distances. The conversation trajectory drifts toward Healthcare — the governance layer sees this before the agent does.
+Six corpus regions, geometrically separated by UMAP. Each cluster is a semantic class. The adversarial corpus (red, top-left) maintains a consistent spatial margin from the legitimate corpora — classification is a proximity query, not a pattern match.
 
 ---
 
@@ -70,9 +68,9 @@ K-means (k=5) within a single corpus. TF-IDF labels each sub-cluster automatical
 
 ### Freeform conversation plotting
 
-![Freeform conversation plotted as a trajectory through semantic space](assets/17_freeform_plotted.png)
+![Freeform conversation (4 messages) plotted — nearest corpus: Real Estate at 5.5](assets/17_freeform_plotted.png)
 
-Paste any conversation as JSON. Each turn is embedded and placed via KNN interpolation — position is the weighted mean of its k nearest reference points. The sequence of placements traces a *trajectory through semantic space*, surfacing context drift the way a particle filter surfaces pose uncertainty.
+Paste any conversation as JSON. Each turn is embedded and placed via KNN interpolation — position is the weighted mean of its k nearest reference points. The sequence of placements traces a *trajectory through semantic space*, surfacing context drift the way a particle filter surfaces pose uncertainty. Here a mortgage query lands near Real Estate (5.5) with Healthcare at 9.8 — the system knows it's in-domain before the agent does.
 
 ---
 
