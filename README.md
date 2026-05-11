@@ -1,101 +1,153 @@
 # Geometric Semantic Recursion
 
-Spatial semantic mapping of agent conversations in N-dimensional space — a framework for flexible agentic governance through geometric context.
+**Semantic scene understanding for language.** 60,760 embedded message pairs projected into 3D space, classified into corpus regions, and queried with KNN — the same primitives used in LiDAR point cloud segmentation, applied to conversational AI governance.
 
-## The Idea
+[![Global semantic point cloud — 60,760 points with labeled wireframe bounding volumes](https://drive.google.com/uc?export=view&id=19olxrPJazYtzal33Zd196t4Symu0-0oU)](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)
 
-Agent conversations have structure. A developer asking about a memory leak and a designer asking about colour contrast are *semantically distant* — and that distance is measurable. Embed the exchanges, project them into 3D space, and the topology reveals natural clusters: intent regions, domain neighbourhoods, context zones.
+*[Watch the full demo (webm)](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)*
 
-This repository explores using that geometry as a governance primitive:
-- Route messages to the right agent based on semantic proximity to known regions
-- Detect context drift when a conversation moves unexpectedly across the map
-- Visualise agent behaviour across sessions as a living point cloud
+---
 
-## Demo: Semantic 3D Point Cloud
+## The Problem
 
-[![Semantic Point Cloud — 60,760 points, corpus clusters with wireframe spheres](https://drive.google.com/uc?export=view&id=1v1zZGAR6vebjItW6hJNCTkLdKyRWFL4G)](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)
+Agentic systems need to know *where they are* — not just what they're doing. A message about a medication dosage and a message about a sales pitch may look syntactically similar but sit in completely different regions of semantic space. Routing decisions, tool access, and compliance checks all depend on that distinction.
 
-*[Watch the demo video](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)*
+Classical CV solved this for physical space: embed sensor data, segment into regions, reason about proximity and membership. This project applies the same approach to language.
 
-60,760 message pairs embedded and projected to 3D. Corpus clusters (Healthcare, Real Estate, Fashion, B2B SaaS, Adversarial, Online Learning) auto-classified and bounded by wireframe spheres. Hover any point for the conversation snippet. Paste a conversation as JSON to plot it live against the corpus.
+---
 
-The simple build script below (`pointcloud_build.py`) generates the same style of viewer from any SQLite conversation database. Each point is a user/assistant exchange, coloured by context label (persona, category, or any string tag).
+## What It Does
 
-### Setup
+Each message pair is embedded with `text-embedding-3-small` (1536-dim), projected to 3D via UMAP, and stored with its PostGIS geometry. At query time:
+
+- **KNN lookup** — find the nearest corpus centroid (L2 distance in embedding space)
+- **Local vs global frame** — switch between world-space view and ego-centric zoom into a single corpus region, like toggling between world frame and ego frame in a LiDAR pipeline
+- **Wireframe bounding volumes** — each corpus cluster gets a convex hull rendered as a wireframe sphere, equivalent to 3D bounding boxes around semantic object classes
+- **Sub-theme segmentation** — within each corpus, K-means (k=5) + TF-IDF labels sub-clusters automatically, like instance segmentation within a semantic class
+
+---
+
+## Corpus Regions
+
+| Corpus | Points | Colour |
+|--------|--------|--------|
+| Healthcare | ~10K | Blue |
+| Real Estate | ~10K | Green |
+| Fashion | ~10K | Pink |
+| B2B SaaS | ~10K | Gold |
+| Online Learning | ~10K | Purple |
+| Adversarial | ~10K | Red |
+
+Adversarial examples (social engineering, jailbreak attempts) form a distinct geometric region — spatially separable from legitimate corpora. Classification is therefore a proximity query, not a pattern match.
+
+---
+
+## Demos
+
+### Global view — labeled bounding volumes
+
+[![Conversation plotted against global corpus cloud](https://drive.google.com/uc?export=view&id=1v1zZGAR6vebjItW6hJNCTkLdKyRWFL4G)](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)
+
+A live conversation (16 messages) plotted in real time against the corpus. Nearest Corpora panel shows KNN distances. The conversation trajectory drifts toward Healthcare — the governance layer sees this before the agent does.
+
+---
+
+### Drill-down — local frame
+
+![Drilled into Healthcare corpus — local coordinate frame with sub-theme clusters](assets/12_drilled_local.png)
+
+Switching to local frame re-centres the coordinate system on the selected corpus — equivalent to transforming from world frame to ego frame. Sub-theme clusters become visible at this resolution.
+
+---
+
+### Sub-theme segmentation
+
+![Sub-theme segmentation within Healthcare corpus](assets/13_sub_themes.png)
+
+K-means (k=5) within a single corpus. TF-IDF labels each sub-cluster automatically. Colour gradients encode sub-theme membership — five shades per corpus, darker = higher TF-IDF weight. This is semantic instance segmentation for language.
+
+---
+
+### Freeform conversation plotting
+
+![Freeform conversation plotted as a trajectory through semantic space](assets/17_freeform_plotted.png)
+
+Paste any conversation as JSON. Each turn is embedded and placed via KNN interpolation — position is the weighted mean of its k nearest reference points. The sequence of placements traces a *trajectory through semantic space*, surfacing context drift the way a particle filter surfaces pose uncertainty.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                     60,760-point corpus                  │
+│   text-embedding-3-small → UMAP(3D) → PostGIS geometry  │
+└───────────────────┬─────────────────────────────────────┘
+                    │
+         ┌──────────▼──────────┐
+         │   embed_service.py  │  KNN placement for new points
+         │   k=15, L2 distance │  weighted mean of k neighbours
+         └──────────┬──────────┘
+                    │
+         ┌──────────▼──────────┐
+         │  pointcloud_router  │  FastAPI — PostGIS queries
+         │  /points /chat      │  local ↔ global transform
+         │  /filter /nearest   │  bounding volume generation
+         └──────────┬──────────┘
+                    │
+         ┌──────────▼──────────┐
+         │   Three.js viewer   │  InstancedMesh, OrbitControls
+         │   pointcloud.html   │  raycaster hover, wireframes
+         └─────────────────────┘
+```
+
+**PostGIS** stores dual geometry per point: `geom_global` (world frame) and `geom_local` (corpus-relative). Local/global toggle is a coordinate transform at the database layer, not the rendering layer.
+
+**Reference index** (`reference_index.npz`) — 60,760 × 384 embeddings + 60,760 × 3 coordinates, loaded into memory by `embed_service.py` for sub-millisecond KNN queries without hitting the database.
+
+---
+
+## Quick Start (simple viewer)
+
+The `pointcloud_build.py` script in this repo generates the same style of viewer from any SQLite conversation database — no PostGIS required.
 
 ```bash
 pip install -r requirements.txt
-```
-
-Requires an OpenAI API key (for `text-embedding-3-small`):
-
-```bash
 export OPENAI_API_KEY=sk-...
+python pointcloud_build.py --db path/to/conversations.db
+# Opens pointcloud.html in any browser
 ```
 
-### Run
-
-```bash
-python pointcloud_build.py --db path/to/your.db
-```
-
-Defaults: reads `data/datum-ui.db`, outputs `pointcloud.html`. Open the HTML file in any browser.
-
-```
-options:
-  --db      Path to SQLite database (default: data/datum-ui.db)
-  --limit   Max message pairs to embed (default: 1000)
-  --out     Output HTML path (default: pointcloud.html)
-  --cache   Embedding cache path (default: data/embeddings_cache.npy)
-  --no-cache  Ignore cached embeddings and re-embed
-```
-
-### Database Schema
+Schema:
 
 ```sql
-CREATE TABLE conversations (
-    id      TEXT PRIMARY KEY,
-    persona TEXT,   -- label used for colouring (e.g. 'developer', 'researcher')
-    title   TEXT
-);
-
-CREATE TABLE messages (
-    id              TEXT PRIMARY KEY,
-    conversation_id TEXT,
-    role            TEXT,  -- 'user' | 'assistant'
-    content         TEXT,
-    created_at      TEXT
-);
+CREATE TABLE conversations (id TEXT, persona TEXT, title TEXT);
+CREATE TABLE messages (id TEXT, conversation_id TEXT, role TEXT, content TEXT, created_at TEXT);
 ```
 
-The `persona` column drives the colour coding. Swap in any string tag — the viewer auto-assigns colours to unknown labels.
+`persona` (or any string tag) drives cluster colouring. Unknown labels auto-assign from a palette.
 
-### Controls
+**Cost**: ~$0.002 per 1,000 message pairs. Embeddings cached to `.npy` — re-runs are free.
 
-| Action | Effect |
-|--------|--------|
-| Drag | Rotate |
-| Scroll | Zoom |
-| Hover | Show message preview |
-
-Auto-rotates when idle.
-
-### Cost
-
-`text-embedding-3-small` costs ~$0.02 per million tokens. 1,000 message pairs (400 chars each) ≈ 100K tokens ≈ **$0.002**. Embeddings are cached to `data/embeddings_cache.npy` so re-runs are free.
+---
 
 ## Governance Applications
 
-The geometry is the insight. Clusters in the point cloud correspond to intent regions. Applications:
+The geometry is the signal:
 
-- **Routing**: classify new messages by proximity to known cluster centroids
-- **Drift detection**: flag when a session trajectory crosses cluster boundaries unexpectedly
-- **Access control**: define semantic "zones" where certain tools or escalations are allowed
-- **Audit**: replay a session as a path through semantic space — visible, inspectable governance
+- **Routing**: assign incoming messages to the nearest corpus centroid — O(k) KNN, no classifier training
+- **Drift detection**: monitor trajectory curvature across turns; sharp turns indicate context switching
+- **Exclusion zones**: define forbidden regions in embedding space (adversarial cluster); reject or escalate on proximity
+- **Audit trail**: replay a session as a path through semantic space — inspectable, spatial, exportable
+
+This is occupancy grid reasoning for language. The agent doesn't need to understand *why* a message is adversarial — it just needs to know it's in the wrong neighbourhood.
+
+---
 
 ## Built With
 
 - [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings) — `text-embedding-3-small`
-- [UMAP](https://umap-learn.readthedocs.io/) — dimensionality reduction
-- [Three.js](https://threejs.org/) — 3D rendering
+- [UMAP](https://umap-learn.readthedocs.io/) — dimensionality reduction (replaces PCA for nonlinear structure)
+- [PostGIS](https://postgis.net/) — spatial indexing and geometry queries
+- [Three.js](https://threejs.org/) — WebGL rendering, instanced mesh, raycasting
 - [Datum](https://github.com/mrodger) — the multi-persona agent platform this was built on
