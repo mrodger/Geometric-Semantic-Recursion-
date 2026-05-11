@@ -1,4 +1,4 @@
-# Geometric Semantic Recursion
+# Geometric Semantic Analysis
 
 **Semantic scene understanding for language.** 60,760 embedded message pairs projected into 3D space, classified into corpus regions, and queried with KNN — the same primitives used in LiDAR point cloud segmentation, applied to conversational AI governance.
 
