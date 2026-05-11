@@ -13,7 +13,13 @@ This repository explores using that geometry as a governance primitive:
 
 ## Demo: Semantic 3D Point Cloud
 
-Builds an interactive Three.js viewer from a conversation database. Each point is a user/assistant exchange, embedded and projected to 3D. Points are coloured by context label (persona, category, or any string tag).
+[![Semantic Point Cloud — 60,760 points, corpus clusters with wireframe spheres](https://drive.google.com/uc?export=view&id=1v1zZGAR6vebjItW6hJNCTkLdKyRWFL4G)](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)
+
+*[Watch the demo video](https://drive.google.com/file/d/17iKSzgB9qrFUdX-IDEzaO5HQuj-tV6VK/view?usp=drivesdk)*
+
+60,760 message pairs embedded and projected to 3D. Corpus clusters (Healthcare, Real Estate, Fashion, B2B SaaS, Adversarial, Online Learning) auto-classified and bounded by wireframe spheres. Hover any point for the conversation snippet. Paste a conversation as JSON to plot it live against the corpus.
+
+The simple build script below (`pointcloud_build.py`) generates the same style of viewer from any SQLite conversation database. Each point is a user/assistant exchange, coloured by context label (persona, category, or any string tag).
 
 ### Setup
 
